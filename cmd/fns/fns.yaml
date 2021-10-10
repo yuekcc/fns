@@ -1,0 +1,3 @@
+# fns configuration
+---
+routerConfigDir: ../gateway/caddy/functions
