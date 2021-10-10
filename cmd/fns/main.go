@@ -57,7 +57,7 @@ func listFunctions(cmd *cobra.Command, args []string) {
 
 	for i := 0; i < len(containers); i++ {
 		c := containers[i]
-		fmt.Println(c.ID, c.Labels["fns-v0-meta:component-path"], c.State)
+		fmt.Println(c.ID, c.Labels["fns-route"], c.State)
 	}
 }
 
