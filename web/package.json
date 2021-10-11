@@ -1,12 +1,48 @@
 {
-  "name": "web",
-  "version": "1.0.0",
-  "private": true,
-  "description": "a web ui for fns",
-  "main": "index.js",
+  "name": "fns-board",
+  "version": "0.0.1",
+  "description": "fns board",
   "scripts": {
-    "start": "pnpm build -r"
+    "build": "esbuild --outdir=dist --target=chrome80 --bundle --minify --sourcemap src/index.js"
   },
-  "author": "zhanlefeng",
-  "license": "MIT"
+  "author": "yuekcc",
+  "license": "MIT",
+  "dependencies": {
+    "alpinejs": "^3.4.2"
+  },
+  "devDependencies": {
+    "esbuild": "^0.13.4",
+    "eslint": "^7.0.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "^2.4.1"
+  },
+  "eslintConfig": {
+    "env": {
+      "browser": true,
+      "commonjs": true,
+      "es2020": true,
+      "jest": true,
+      "mocha": true,
+      "node": true
+    },
+    "parserOptions": {
+      "sourceType": "module"
+    },
+    "plugins": [
+      "prettier"
+    ],
+    "extends": [
+      "eslint:recommended",
+      "plugin:prettier/recommended"
+    ]
+  },
+  "prettier": {
+    "printWidth": 120,
+    "semi": true,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "arrowParens": "avoid",
+    "endOfLine": "auto"
+  }
 }
