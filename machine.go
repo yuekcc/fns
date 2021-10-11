@@ -109,7 +109,7 @@ func (r *Machine) Uninstall(ctx context.Context, containerID string) error {
 }
 
 func (r *Machine) List(ctx context.Context) ([]types.Container, error) {
-	list, err := r.useClient().ContainerList(ctx, types.ContainerListOptions{})
+	list, err := r.useClient().ContainerList(ctx, types.ContainerListOptions{All: true})
 	if err != nil {
 		return nil, err
 	}
