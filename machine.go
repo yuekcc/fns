@@ -17,33 +17,33 @@ type Machine struct {
 	sync.Mutex
 }
 
-func GetClient() (*client.Client, error) {
+func getDockerClient() (*client.Client, error) {
 	return client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 }
 
-func (r *Machine) useClient() *client.Client {
-	r.Lock()
-	defer r.Unlock()
+func (m *Machine) useClient() *client.Client {
+	m.Lock()
+	defer m.Unlock()
 
-	if r.cli == nil {
-		cli, err := GetClient()
+	if m.cli == nil {
+		cli, err := getDockerClient()
 		if err != nil {
 			panic(err)
 		}
 
-		r.cli = cli
+		m.cli = cli
 	}
 
-	return r.cli
+	return m.cli
 }
 
-func (r *Machine) createContainer(ctx context.Context, imageName string, labels map[string]string) (string, error) {
+func (m *Machine) createContainer(ctx context.Context, imageName string, labels map[string]string) (string, error) {
 	config := &container.Config{
 		Image:  imageName,
 		Labels: labels,
 	}
 
-	resp, err := r.useClient().ContainerCreate(ctx, config, nil, nil, nil, "")
+	resp, err := m.useClient().ContainerCreate(ctx, config, nil, nil, nil, "")
 	if err != nil {
 		log.Println("ContainerCreate Error:", err)
 		return "", err
@@ -52,19 +52,14 @@ func (r *Machine) createContainer(ctx context.Context, imageName string, labels 
 	return resp.ID, nil
 }
 
-func (r *Machine) Install(ctx context.Context, spec *fnspec.FunctionSpec) (string, error) {
-	entryPoint := spec.Metadata.LaunchCommandLine
-	if entryPoint == "" {
-		entryPoint = spec.Metadata.Name
-	}
-
+func (m *Machine) Install(ctx context.Context, spec *fnspec.FunctionSpec) (string, error) {
 	labels := generateContainerLabels(spec)
 	imageName := "yuekcc/node-demo-app"
-	return r.createContainer(ctx, imageName, labels)
+	return m.createContainer(ctx, imageName, labels)
 }
 
-func (r *Machine) Spawn(ctx context.Context, containerID string) error {
-	err := r.useClient().ContainerStart(ctx, containerID, types.ContainerStartOptions{})
+func (m *Machine) Spawn(ctx context.Context, containerId string) error {
+	err := m.useClient().ContainerStart(ctx, containerId, types.ContainerStartOptions{})
 	if err != nil {
 		log.Println("ContainerStart Error:", err)
 		return err
@@ -73,8 +68,8 @@ func (r *Machine) Spawn(ctx context.Context, containerID string) error {
 	return nil
 }
 
-func (r *Machine) Kill(ctx context.Context, containerID string) error {
-	err := r.useClient().ContainerStop(ctx, containerID, nil)
+func (m *Machine) Kill(ctx context.Context, containerId string) error {
+	err := m.useClient().ContainerStop(ctx, containerId, nil)
 	if err != nil {
 		log.Println("ContainerStop Error:", err)
 		return err
@@ -83,8 +78,8 @@ func (r *Machine) Kill(ctx context.Context, containerID string) error {
 	return nil
 }
 
-func (r *Machine) Uninstall(ctx context.Context, containerID string) error {
-	info, err := r.useClient().ContainerInspect(ctx, containerID)
+func (m *Machine) Uninstall(ctx context.Context, containerId string) error {
+	info, err := m.Inspect(ctx, containerId)
 	if err != nil {
 		log.Println("ContainerStats Error:", err)
 		return err
@@ -93,13 +88,13 @@ func (r *Machine) Uninstall(ctx context.Context, containerID string) error {
 	containerStatus := strings.ToLower(info.State.Status)
 	if containerStatus == "running" {
 		log.Println("killing a running app")
-		err := r.Kill(ctx, containerID)
+		err := m.Kill(ctx, containerId)
 		if err != nil {
 			return err
 		}
 	}
 
-	err = r.useClient().ContainerRemove(ctx, containerID, types.ContainerRemoveOptions{})
+	err = m.useClient().ContainerRemove(ctx, containerId, types.ContainerRemoveOptions{})
 	if err != nil {
 		log.Println("ContainerRemove Error:", err)
 		return err
@@ -108,8 +103,8 @@ func (r *Machine) Uninstall(ctx context.Context, containerID string) error {
 	return nil
 }
 
-func (r *Machine) List(ctx context.Context) ([]types.Container, error) {
-	list, err := r.useClient().ContainerList(ctx, types.ContainerListOptions{All: true})
+func (m *Machine) List(ctx context.Context) ([]types.Container, error) {
+	list, err := m.useClient().ContainerList(ctx, types.ContainerListOptions{All: true})
 	if err != nil {
 		return nil, err
 	}
@@ -129,8 +124,8 @@ func (m *Machine) Inspect(ctx context.Context, containerId string) (types.Contai
 	return m.useClient().ContainerInspect(ctx, containerId)
 }
 
-func (r *Machine) Shutdown() error {
-	return r.useClient().Close()
+func (m *Machine) Shutdown() error {
+	return m.useClient().Close()
 }
 
 func GetMachine() *Machine {
